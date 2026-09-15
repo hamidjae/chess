@@ -86,7 +86,7 @@ public class ChessPiece {
                     if (occupying != null){
                         break;
                     }
-            }
+                }
                 for (int rowChanges = myPosition.getRow() - 1; rowChanges >= 1; rowChanges--) {
                     ChessPosition destination = new ChessPosition(rowChanges, myPosition.getColumn());
                     ChessPiece occupying = board.getPiece(destination);
@@ -116,6 +116,68 @@ public class ChessPiece {
                     if (occupying != null) {
                         break;
                     }
+                }
+                break;
+
+            case BISHOP:
+                int bisRow = myPosition.getRow() + 1;
+                int bisCol = myPosition.getColumn() + 1;
+                while (bisRow <= 8 && bisCol <= 8){
+                    ChessPosition destination = new ChessPosition(bisRow, bisCol);
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                    bisRow++;
+                    bisCol++;
+                }
+
+                bisRow = myPosition.getRow() + 1;
+                bisCol = myPosition.getColumn() - 1;
+                while (bisRow <= 8 && bisCol >= 1){
+                    ChessPosition destination = new ChessPosition(bisRow, bisCol);
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                    bisRow++;
+                    bisCol--;
+                }
+
+                bisRow = myPosition.getRow() - 1;
+                bisCol = myPosition.getColumn() + 1;
+                while (bisRow >= 1 && bisCol <= 8){
+                    ChessPosition destination = new ChessPosition(bisRow, bisCol);
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                    bisRow--;
+                    bisCol++;
+                }
+
+                bisRow = myPosition.getRow() - 1;
+                bisCol = myPosition.getColumn() - 1;
+                while (bisRow >= 1 && bisCol >= 1){
+                    ChessPosition destination = new ChessPosition(bisRow, bisCol);
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                    bisRow--;
+                    bisCol--;
                 }
         }
         return moves;
