@@ -54,22 +54,69 @@ public class ChessPiece {
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         Collection<ChessMove> moves = new ArrayList<>();
-        for (int rowChanges = -1; rowChanges <= 1; rowChanges++){
-            for (int colChanges = -1; colChanges <= 1; colChanges++){
-                if (rowChanges == 0 && colChanges == 0){
-                    continue;
-                }
-                int newRow = myPosition.getRow() + rowChanges;
-                int newCol = myPosition.getColumn() + colChanges;
-                if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8){
-                    ChessPosition destination = new ChessPosition(newRow, newCol);
-                    ChessPiece occupying = board.getPiece(destination);
 
+        switch (type){
+            case KING:
+                for (int rowChanges = -1; rowChanges <= 1; rowChanges++){
+                    for (int colChanges = -1; colChanges <= 1; colChanges++){
+                        if (rowChanges == 0 && colChanges == 0){
+                            continue;
+                        }
+                        int newRow = myPosition.getRow() + rowChanges;
+                        int newCol = myPosition.getColumn() + colChanges;
+                        if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8){
+                            ChessPosition destination = new ChessPosition(newRow, newCol);
+                            ChessPiece occupying = board.getPiece(destination);
+
+                            if (occupying == null || occupying.getTeamColor() != pieceColor){
+                                moves.add(new ChessMove(myPosition, destination, null));
+                            }
+                        }
+                    }
+                }
+                break;
+
+            case ROOK:
+                for (int rowChanges = myPosition.getRow() + 1; rowChanges <= 8; rowChanges++){
+                    ChessPosition destination = new ChessPosition(rowChanges, myPosition.getColumn());
+                    ChessPiece occupying = board.getPiece(destination);
                     if (occupying == null || occupying.getTeamColor() != pieceColor){
                         moves.add(new ChessMove(myPosition, destination, null));
                     }
-                }
+                    if (occupying != null){
+                        break;
+                    }
             }
+                for (int rowChanges = myPosition.getRow() - 1; rowChanges >= 1; rowChanges--) {
+                    ChessPosition destination = new ChessPosition(rowChanges, myPosition.getColumn());
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                }
+                for (int colChanges = myPosition.getColumn() + 1; colChanges <= 8; colChanges++){
+                    ChessPosition destination = new ChessPosition(myPosition.getRow(), colChanges);
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                }
+                for (int colChanges = myPosition.getColumn() - 1; colChanges >= 1; colChanges--){
+                    ChessPosition destination = new ChessPosition(myPosition.getRow(), colChanges);
+                    ChessPiece occupying = board.getPiece(destination);
+                    if (occupying == null || occupying.getTeamColor() != pieceColor) {
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                    if (occupying != null) {
+                        break;
+                    }
+                }
         }
         return moves;
     }
