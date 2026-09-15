@@ -2,6 +2,7 @@ package chess;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.ArrayList;
 
 /**
  * Represents a single chess piece
@@ -52,7 +53,25 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        throw new RuntimeException("Not implemented");
+        Collection<ChessMove> moves = new ArrayList<>();
+        for (int rowChanges = -1; rowChanges <= 1; rowChanges++){
+            for (int colChanges = -1; colChanges <= 1; colChanges++){
+                if (rowChanges == 0 && colChanges == 0){
+                    continue;
+                }
+                int newRow = myPosition.getRow() + rowChanges;
+                int newCol = myPosition.getColumn() + colChanges;
+                if (newRow >= 1 && newRow <= 8 && newCol >= 1 && newCol <= 8){
+                    ChessPosition destination = new ChessPosition(newRow, newCol);
+                    ChessPiece occupying = board.getPiece(destination);
+
+                    if (occupying == null || occupying.getTeamColor() != pieceColor){
+                        moves.add(new ChessMove(myPosition, destination, null));
+                    }
+                }
+            }
+        }
+        return moves;
     }
 
     @Override
