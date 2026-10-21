@@ -46,6 +46,7 @@ public class ChessBoard {
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
+        // Pawn mechanics
         for (int outer = 0; outer <= 7; outer++){
             for (int inner = 0; inner <= 7; inner++){
                 board[outer][inner] = null;
