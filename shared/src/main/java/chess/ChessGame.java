@@ -200,14 +200,16 @@ public class ChessGame {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece occupying = board.getPiece(position);
 
-                if (occupying != null && occupying.getTeamColor() != teamColor) {
-                    Collection<ChessMove> enemyMoves =
-                            occupying.pieceMoves(board, position);
+                if (occupying == null || occupying.getTeamColor() == teamColor) {
+                    continue;
+                }
 
-                    for (ChessMove move : enemyMoves) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
+                Collection<ChessMove> enemyMoves =
+                        occupying.pieceMoves(board, position);
+
+                for (ChessMove move : enemyMoves) {
+                    if (move.getEndPosition().equals(kingPosition)) {
+                        return true;
                     }
                 }
             }
