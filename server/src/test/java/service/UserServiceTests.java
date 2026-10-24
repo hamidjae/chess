@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class UserServiceTests {
 
 //    Registration
+
     @Test
     public void checkRegistration() throws DataAccessException, BadRequestException, AlreadyTakenException{
         UserDAO userDAO = new MemoryUserDAO();
@@ -114,4 +115,30 @@ public class UserServiceTests {
         LoginRequest loginRequest = new LoginRequest("alia", null);
         assertThrows(BadRequestException.class, () -> userService.login(loginRequest));
     }
+
+//    Logout
+
+    @Test
+    public void successfulLogout() throws DataAccessException, UnauthorizedException{
+        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        UserService userService = new UserService(authDAO, userDAO);
+
+        AuthData auth = new AuthData("testToken", "mama");
+        authDAO.createAuth(auth);
+        userService.logout(auth.authToken());
+
+        assertNull(authDAO.getAuth(auth.authToken()));
+
+    }
+
+    @Test
+    public void unknownTokenLogout() throws DataAccessException, UnauthorizedException{
+        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        UserService userService = new UserService(authDAO, userDAO);
+
+        assertThrows(UnauthorizedException.class, () -> userService.logout("unknownToken"));
+    }
+
 }

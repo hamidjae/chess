@@ -30,6 +30,8 @@ public class Server {
         javalin.post("/user", context -> userHandler.register(context));
 //        Login
         javalin.post("/session", context -> userHandler.login(context));
+//        Logout
+        javalin.delete("/session", context -> userHandler.logout(context));
 
 
 //        Error 500: Description of error

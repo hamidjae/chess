@@ -1,6 +1,7 @@
 package handler;
 
 import com.google.gson.Gson;
+import model.AuthData;
 import request.LoginRequest;
 import request.RegisterRequest;
 import result.LoginResult;
@@ -33,5 +34,13 @@ public class UserHandler {
         LoginResult result = userService.login(request);
         context.contentType("application/json");
         context.result(gson.toJson(result));
+    }
+
+    public void logout(Context context) throws DataAccessException, UnauthorizedException{
+        String authorizationToken = context.header("authorization");
+        userService.logout(authorizationToken);
+        context.status(200);
+        context.contentType("application/json");
+        context.result("{}");
     }
 }
