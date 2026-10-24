@@ -9,11 +9,8 @@ import dataaccess.UserDAO;
 import dataaccess.MemoryUserDAO;
 import dataaccess.MemoryGameDAO;
 import dataaccess.MemoryAuthDAO;
-import service.AlreadyTakenException;
-import service.BadRequestException;
-import service.ClearService;
+import service.*;
 import handler.ClearHandler;
-import service.UserService;
 
 public class Server {
     private final Javalin javalin;
@@ -31,23 +28,36 @@ public class Server {
         javalin.delete("/db", context -> clearHandler.handle(context));
 //        Register
         javalin.post("/user", context -> userHandler.register(context));
+//        Login
+        javalin.post("/session", context -> userHandler.login(context));
 
+
+//        Error 500: Description of error
         javalin.exception(DataAccessException.class, (exception, context) -> {
             context.status(500);
             context.contentType("application/json");
             context.result("{ \"message\": \"Error: Could not access the stored data.\" }");
         });
 
+//        Error 400: BadRequestException
         javalin.exception(BadRequestException.class, (exception, context) -> {
             context.status(400);
             context.contentType("application/json");
             context.result("{ \"message\": \"Error: bad request\" }");
         });
 
+//        Error 403: AlreadyTakenException
         javalin.exception(AlreadyTakenException.class, (exception, context) -> {
             context.status(403);
             context.contentType("application/json");
             context.result("{ \"message\": \"Error: already taken\" }");
+        });
+
+//        Error 401: UnauthorizedException
+        javalin.exception(UnauthorizedException.class, (exception, context) ->{
+            context.status(401);
+            context.contentType("application/json");
+            context.result("{ \"message\": \"Error: unauthorized\" }");
         });
     }
 

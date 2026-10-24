@@ -3,7 +3,9 @@ package service;
 import dataaccess.AuthDAO;
 import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
+import request.LoginRequest;
 import request.RegisterRequest;
+import result.LoginResult;
 import result.RegisterResult;
 import model.UserData;
 import model.AuthData;
@@ -39,5 +41,24 @@ public class UserService {
         authDAO.createAuth(auth);
 
         return new RegisterResult(registerRequest.username(), authToken);
+    }
+
+    public LoginResult login(LoginRequest loginRequest) throws BadRequestException, DataAccessException, UnauthorizedException{
+        if (loginRequest == null || loginRequest.username() == null || loginRequest.password() == null){
+            throw new BadRequestException("Error: bad request");
+        }
+
+        UserData user = userDAO.getUser(loginRequest.username());
+
+        if (user == null || !(user.password().equals(loginRequest.password()))){
+            throw new UnauthorizedException("Error: unauthorized");
+        }
+
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, loginRequest.username());
+
+        authDAO.createAuth(auth);
+
+        return new LoginResult(loginRequest.username(), authToken);
     }
 }
