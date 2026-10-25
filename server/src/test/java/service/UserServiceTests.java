@@ -9,7 +9,6 @@ import request.LoginRequest;
 import request.RegisterRequest;
 import result.LoginResult;
 import result.RegisterResult;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class UserServiceTests {

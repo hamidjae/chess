@@ -1,6 +1,7 @@
 package server;
 
 import dataaccess.DataAccessException;
+import handler.GameHandler;
 import handler.UserHandler;
 import io.javalin.*;
 import dataaccess.GameDAO;
@@ -21,6 +22,8 @@ public class Server {
     private final ClearHandler clearHandler = new ClearHandler(clearService);
     private final UserService userService = new UserService(authDAO, userDAO);
     private final UserHandler userHandler = new UserHandler(userService);
+    private final GameService gameService = new GameService(gameDAO, authDAO);
+    private final GameHandler gameHandler = new GameHandler(gameService);
 
     public Server() {
         javalin = Javalin.create(config -> config.staticFiles.add("web"));
@@ -32,6 +35,8 @@ public class Server {
         javalin.post("/session", context -> userHandler.login(context));
 //        Logout
         javalin.delete("/session", context -> userHandler.logout(context));
+//        Create Game
+        javalin.post("/game", context -> gameHandler.createGame(context));
 
 
 //        Error 500: Description of error
