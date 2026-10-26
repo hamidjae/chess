@@ -6,6 +6,8 @@ import model.GameData;
 import org.junit.jupiter.api.Test;
 import request.CreateGameRequest;
 import result.CreateGameResult;
+import result.GameSummary;
+import result.ListGamesResult;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,5 +109,58 @@ public class GameServiceTests {
         assertEquals("testGame", firstGame.gameName());
         assertEquals("secondTestGame", secondGame.gameName());
         assertNotEquals(result.gameID(), secondResult.gameID());
+    }
+
+//    List Games
+
+    @Test
+    public void listNoGames() throws DataAccessException, UnauthorizedException, BadRequestException{
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+        GameService gameService = new GameService(gameDAO, authDAO);
+        AuthData auth = new AuthData("testToken", "michelangelo");
+        authDAO.createAuth(auth);
+
+        ListGamesResult result = gameService.listGames(auth.authToken());
+        assertTrue(result.games().isEmpty());
+    }
+
+    @Test
+    public void listMultipleGames() throws DataAccessException, UnauthorizedException, BadRequestException{
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+        GameService gameService = new GameService(gameDAO, authDAO);
+        AuthData auth = new AuthData("testToken", "leonardo");
+        AuthData secondAuth = new AuthData("secondTestToken", "raphael");
+        authDAO.createAuth(auth);
+        authDAO.createAuth(secondAuth);
+
+        CreateGameRequest request = new CreateGameRequest("testGame");
+        CreateGameRequest secondRequest = new CreateGameRequest("secondTestGame");
+        CreateGameResult result = gameService.createGame(auth.authToken(), request);
+        CreateGameResult secondResult= gameService.createGame(secondAuth.authToken(), secondRequest);
+
+        ListGamesResult gameList = gameService.listGames(auth.authToken());
+        assertEquals(2, gameList.games().size());
+        assertTrue(gameList.games().contains(new GameSummary(result.gameID(), null, null, "testGame")));
+        assertTrue(gameList.games().contains(new GameSummary(secondResult.gameID(), null, null, "secondTestGame")));
+    }
+
+    @Test
+    public void listGamesInvalidToken() throws DataAccessException, UnauthorizedException, BadRequestException{
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        assertThrows(UnauthorizedException.class, () -> gameService.listGames("random-kid-token-2"));
+    }
+
+    @Test
+    public void listGamesMissingToken() throws DataAccessException, UnauthorizedException, BadRequestException{
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        assertThrows(UnauthorizedException.class, () -> gameService.listGames(null));
     }
 }

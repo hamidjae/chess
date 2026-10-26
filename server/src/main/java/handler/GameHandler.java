@@ -5,6 +5,7 @@ import dataaccess.DataAccessException;
 import io.javalin.http.Context;
 import request.CreateGameRequest;
 import result.CreateGameResult;
+import result.ListGamesResult;
 import service.BadRequestException;
 import service.GameService;
 import service.UnauthorizedException;
@@ -21,6 +22,14 @@ public class GameHandler {
         Gson gson = new Gson();
         CreateGameRequest request = gson.fromJson(context.body(), CreateGameRequest.class);
         CreateGameResult result = gameService.createGame(authorizationToken, request);
+        context.contentType("application/json");
+        context.result(gson.toJson(result));
+    }
+
+    public void listGames(Context context) throws UnauthorizedException, DataAccessException{
+        String authorizationToken = context.header("authorization");
+        Gson gson = new Gson();
+        ListGamesResult result = gameService.listGames(authorizationToken);
         context.contentType("application/json");
         context.result(gson.toJson(result));
     }

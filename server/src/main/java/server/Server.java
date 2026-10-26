@@ -37,6 +37,8 @@ public class Server {
         javalin.delete("/session", context -> userHandler.logout(context));
 //        Create Game
         javalin.post("/game", context -> gameHandler.createGame(context));
+//        List Games
+        javalin.get("/game", context -> gameHandler.listGames(context));
 
 
 //        Error 500: Description of error
