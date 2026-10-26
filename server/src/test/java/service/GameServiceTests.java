@@ -5,6 +5,7 @@ import model.AuthData;
 import model.GameData;
 import org.junit.jupiter.api.Test;
 import request.CreateGameRequest;
+import request.JoinGameRequest;
 import result.CreateGameResult;
 import result.GameSummary;
 import result.ListGamesResult;
@@ -162,5 +163,175 @@ public class GameServiceTests {
         GameService gameService = new GameService(gameDAO, authDAO);
 
         assertThrows(UnauthorizedException.class, () -> gameService.listGames(null));
+    }
+
+//    Join Game
+
+    private GameService setupJoinTest(GameDAO gameDAO, AuthDAO authDAO) throws DataAccessException {
+        authDAO.createAuth(new AuthData("first-token", "leonardo"));
+        authDAO.createAuth(new AuthData("second-token", "raphael"));
+        return new GameService(gameDAO, authDAO);
+    }
+
+    @Test
+    public void joinGameAsWhite() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        service.joinGame("first-token", new JoinGameRequest("WHITE", gameID));
+
+        GameData game = gameDAO.getGame(gameID);
+        assertEquals("leonardo", game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
+
+    @Test
+    public void joinGameAsBlack() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        service.joinGame("first-token", new JoinGameRequest("BLACK", gameID));
+
+        GameData game = gameDAO.getGame(gameID);
+        assertEquals("leonardo", game.blackUsername());
+        assertNull(game.whiteUsername());
+    }
+
+    @Test
+    public void joinPreservesOtherPlayer() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+        GameData originalGame = gameDAO.getGame(gameID);
+        String originalState = new com.google.gson.Gson().toJson(originalGame.game());
+
+        service.joinGame("first-token", new JoinGameRequest("WHITE", gameID));
+        service.joinGame("second-token", new JoinGameRequest("BLACK", gameID));
+
+        GameData game = gameDAO.getGame(gameID);
+        assertEquals("leonardo", game.whiteUsername());
+        assertEquals("raphael", game.blackUsername());
+        assertEquals(gameID, game.gameID());
+        assertEquals("testGame", game.gameName());
+        assertEquals(originalState, new com.google.gson.Gson().toJson(game.game()));
+    }
+
+    @Test
+    public void joinWhiteAlreadyTaken() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        service.joinGame("first-token", new JoinGameRequest("WHITE", gameID));
+
+        assertThrows(AlreadyTakenException.class, () -> service.joinGame("second-token", new JoinGameRequest("WHITE", gameID)));
+
+        GameData game = gameDAO.getGame(gameID);
+        assertEquals("leonardo", game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
+
+    @Test
+    public void joinBlackAlreadyTaken() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        service.joinGame("first-token", new JoinGameRequest("BLACK", gameID));
+
+        assertThrows(AlreadyTakenException.class, () -> service.joinGame("second-token", new JoinGameRequest("BLACK", gameID)));
+
+        GameData game = gameDAO.getGame(gameID);
+        assertEquals("leonardo", game.blackUsername());
+        assertNull(game.whiteUsername());
+    }
+
+    @Test
+    public void joinWithInvalidToken() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        assertThrows(UnauthorizedException.class, () -> service.joinGame("unknown-token", new JoinGameRequest("WHITE", gameID)));
+        assertPlayerSlotsEmpty(gameDAO, gameID);
+    }
+
+    @Test
+    public void joinWithMissingToken() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        assertThrows(UnauthorizedException.class, () -> service.joinGame(null, new JoinGameRequest("WHITE", gameID)));
+        assertPlayerSlotsEmpty(gameDAO, gameID);
+    }
+
+    @Test
+    public void joinNonexistentGame() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+
+        assertThrows(BadRequestException.class, () -> service.joinGame("first-token", new JoinGameRequest("WHITE", 999)));
+        assertTrue(gameDAO.listGames().isEmpty());
+    }
+
+    @Test
+    public void joinWithInvalidColor() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        assertThrows(BadRequestException.class, () -> service.joinGame("first-token", new JoinGameRequest("RED", gameID)));
+        assertPlayerSlotsEmpty(gameDAO, gameID);
+    }
+
+    @Test
+    public void joinWithMissingColor() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        assertThrows(BadRequestException.class, () -> service.joinGame("first-token", new JoinGameRequest(null, gameID)));
+        assertPlayerSlotsEmpty(gameDAO, gameID);
+    }
+
+    @Test
+    public void joinWithMissingGameID() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        assertThrows(BadRequestException.class, () -> service.joinGame("first-token", new JoinGameRequest("WHITE", null)));
+        assertPlayerSlotsEmpty(gameDAO, gameID);
+    }
+
+    @Test
+    public void joinWithNullRequest() throws Exception {
+        GameDAO gameDAO = new MemoryGameDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameService service = setupJoinTest(gameDAO, authDAO);
+        int gameID = gameDAO.createGame("testGame");
+
+        assertThrows(BadRequestException.class, () -> service.joinGame("first-token", null));
+        assertPlayerSlotsEmpty(gameDAO, gameID);
+    }
+
+    private void assertPlayerSlotsEmpty(GameDAO gameDAO, int gameID) throws DataAccessException {GameData game = gameDAO.getGame(gameID);
+        assertNotNull(game);
+        assertNull(game.whiteUsername());
+        assertNull(game.blackUsername());
     }
 }

@@ -39,6 +39,8 @@ public class Server {
         javalin.post("/game", context -> gameHandler.createGame(context));
 //        List Games
         javalin.get("/game", context -> gameHandler.listGames(context));
+//        Join Game
+        javalin.put("/game", context -> gameHandler.joinGame(context));
 
 
 //        Error 500: Description of error
