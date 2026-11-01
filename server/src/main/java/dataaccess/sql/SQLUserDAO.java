@@ -16,7 +16,8 @@ public class SQLUserDAO implements UserDAO {
                 email VARCHAR(255) NOT NULL
                 )
                 """;
-        try (var connection = DatabaseManager.getConnection(); var preparedStatement = connection.prepareStatement(statement)) {
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
             preparedStatement.executeUpdate();
         }
         catch (SQLException exception) {
@@ -27,7 +28,8 @@ public class SQLUserDAO implements UserDAO {
     @Override
     public void createUser(UserData user) throws DataAccessException {
         String statement = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
-        try (var connection = DatabaseManager.getConnection(); var preparedStatement = connection.prepareStatement(statement)) {
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
             preparedStatement.setString(1, user.username());
             preparedStatement.setString(2, user.password());
             preparedStatement.setString(3, user.email());
@@ -42,7 +44,8 @@ public class SQLUserDAO implements UserDAO {
     public UserData getUser(String username) throws DataAccessException {
         String statement = "SELECT username, password, email FROM users WHERE username = ?";
 
-        try (var connection = DatabaseManager.getConnection(); var preparedStatement = connection.prepareStatement(statement)) {
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
             preparedStatement.setString(1, username);
 
             try (var results = preparedStatement.executeQuery()) {
@@ -64,7 +67,8 @@ public class SQLUserDAO implements UserDAO {
     public void clear() throws DataAccessException {
         String statement = "DELETE FROM users";
 
-        try (var connection = DatabaseManager.getConnection(); var preparedStatement = connection.prepareStatement(statement)) {
+        try (var connection = DatabaseManager.getConnection();
+             var preparedStatement = connection.prepareStatement(statement)) {
             preparedStatement.executeUpdate();
         }
         catch (SQLException exception) {
