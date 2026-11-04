@@ -5,6 +5,7 @@ import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
+import org.mindrot.jbcrypt.BCrypt;
 import request.LoginRequest;
 import request.RegisterRequest;
 import result.LoginResult;
@@ -28,6 +29,9 @@ public class UserServiceTests {
         assertEquals("hamid", result.username());
         UserData storedUser = userDAO.getUser("hamid");
         assertNotNull(storedUser);
+
+        assertNotEquals(registerRequest.password(), storedUser.password());
+        assertTrue(BCrypt.checkpw(registerRequest.password(), storedUser.password()));
 
 //        Checking if the authToken exists
         AuthData storedAuth = authDAO.getAuth(result.authToken());
@@ -67,7 +71,8 @@ public class UserServiceTests {
         UserDAO userDAO = new MemoryUserDAO();
         AuthDAO authDAO = new MemoryAuthDAO();
         UserService userService = new UserService(authDAO, userDAO);
-        userDAO.createUser(new UserData("alia", "p0302", "alia@gmail.com"));
+        String passwordHash = BCrypt.hashpw("p0302", BCrypt.gensalt());
+        userDAO.createUser(new UserData("alia", passwordHash, "alia@gmail.com"));
 
         LoginRequest loginRequest = new LoginRequest("alia", "p0302");
         LoginResult result = userService.login(loginRequest);
@@ -84,7 +89,8 @@ public class UserServiceTests {
         UserDAO userDAO = new MemoryUserDAO();
         AuthDAO authDAO = new MemoryAuthDAO();
         UserService userService = new UserService(authDAO, userDAO);
-        userDAO.createUser(new UserData("alia", "p0302", "alia@gmail.com"));
+        String passwordHash = BCrypt.hashpw("p0302", BCrypt.gensalt());
+        userDAO.createUser(new UserData("alia", passwordHash, "alia@gmail.com"));
 
         LoginRequest loginRequest = new LoginRequest("alia", "WrongPasswordDummy");
 
