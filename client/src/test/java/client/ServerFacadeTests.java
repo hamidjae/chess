@@ -2,6 +2,8 @@ import client.ServerFacade;
 import org.junit.jupiter.api.*;
 import server.Server;
 
+import java.io.IOException;
+
 
 public class ServerFacadeTests {
 
@@ -14,6 +16,10 @@ public class ServerFacadeTests {
         var port = server.run(0);
         facade = new ServerFacade(port);
         System.out.println("Started test HTTP server on " + port);
+    }
+    @BeforeEach
+    void clearDatabase() throws IOException, InterruptedException{
+        facade.clear();
     }
 
     @AfterAll
