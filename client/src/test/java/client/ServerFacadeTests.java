@@ -33,4 +33,21 @@ public class ServerFacadeTests {
         Assertions.assertNotNull(facade);
     }
 
+    @Test
+    void registerNewUser() throws Exception{
+        var result = facade.register("player1", "testPassword", "player1@gmail.com");
+
+        Assertions.assertEquals("player1", result.username());
+        Assertions.assertNotNull(result.authToken());
+        Assertions.assertFalse(result.authToken().isBlank());
+    }
+
+    @Test
+    void duplicateUsername() throws IOException, InterruptedException{
+        facade.register("player1", "password1", "player@gmail.com");
+        var error = Assertions.assertThrows(IOException.class, () -> facade.register("player1",
+                "password2", "playRrr@gmail.com"));
+        Assertions.assertEquals("Username already taken.", error.getMessage());
+    }
+
 }
