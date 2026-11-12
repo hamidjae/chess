@@ -2,6 +2,7 @@ package client;
 
 import com.google.gson.Gson;
 import request.CreateGameRequest;
+import request.JoinGameRequest;
 import request.LoginRequest;
 import request.RegisterRequest;
 import result.CreateGameResult;
@@ -140,5 +141,33 @@ public class ServerFacade {
         }
 
         return gson.fromJson(response.body(), ListGamesResult.class);
+    }
+
+    public void joinGame(String authToken, String playerColor, int gameID)
+            throws IOException, InterruptedException {
+        String json = gson.toJson(new JoinGameRequest(playerColor, gameID));
+
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(baseURL + "/game"))
+                .header("Authorization", authToken)
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+        int status = response.statusCode();
+
+        if (status == 400) {
+            throw new IOException("Invalid game or player color.");
+        }
+        if (status == 401) {
+            throw new IOException("Session is no longer valid.");
+        }
+        if (status == 403) {
+            throw new IOException("That color is already taken.");
+        }
+        if (status < 200 || status >= 300) {
+            throw new IOException("Could not join the game.");
+        }
     }
 }
