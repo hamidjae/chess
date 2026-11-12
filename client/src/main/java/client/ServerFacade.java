@@ -74,5 +74,22 @@ public class ServerFacade {
         return gson.fromJson(response.body(), LoginResult.class);
     }
 
+    public void logout(String authToken)
+            throws IOException, InterruptedException{
+        var httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(baseURL + "/session"))
+                .header("Authorization", authToken)
+                .DELETE()
+                .build();
 
+        var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.discarding());
+
+        if (response.statusCode() == 401) {
+            throw new IOException("Session is no longer valid.");
+        }
+
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IOException("Could not log out the user.");
+        }
+    }
 }
