@@ -122,4 +122,23 @@ public class ServerFacade {
         return gson.fromJson(response.body(), CreateGameResult.class).gameID();
     }
 
+    public ListGamesResult listGames(String authToken)
+            throws IOException, InterruptedException {
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(baseURL + "/game"))
+                .header("Authorization", authToken)
+                .GET()
+                .build();
+
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 401) {
+            throw new IOException("Session is no longer valid.");
+        }
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IOException("Could not list the games.");
+        }
+
+        return gson.fromJson(response.body(), ListGamesResult.class);
+    }
 }
