@@ -97,4 +97,48 @@ public class ServerFacadeTests {
         Assertions.assertEquals("Session is no longer valid.", error.getMessage());
     }
 
+    @Test
+    void createGameReturnsGameID() throws Exception {
+        var user = facade.register("player1", "testPassword", "player1@example.com");
+
+        int gameID = facade.createGame(user.authToken(), "Queen's Gambit");
+
+        Assertions.assertTrue(gameID > 0);
+    }
+
+    @Test
+    void createGameRejectsInvalidToken() throws Exception {
+        var user = facade.register("player1", "testPassword", "player1@example.com");
+
+        var error = Assertions.assertThrows(IOException.class,
+                () -> facade.createGame("invalid-token", "Unauthorized Game"));
+
+        Assertions.assertEquals("Session is no longer valid.", error.getMessage());
+        Assertions.assertTrue(facade.listGames(user.authToken()).games().isEmpty());
+    }
+
+    @Test
+    void listGamesReturnsCreatedGames() throws Exception {
+        var user = facade.register("player1", "testPassword", "player1@example.com");
+        String token = user.authToken();
+        int firstID = facade.createGame(token, "Queen's Gambit");
+        int secondID = facade.createGame(token, "BongCloud");
+
+        var games = facade.listGames(token).games();
+
+        Assertions.assertEquals(2, games.size());
+        Assertions.assertTrue(games.stream().anyMatch(game ->
+                game.gameID() == firstID && "Queen's Gambit".equals(game.gameName())));
+        Assertions.assertTrue(games.stream().anyMatch(game ->
+                game.gameID() == secondID && "BongCloud".equals(game.gameName())));
+    }
+
+    @Test
+    void listGamesRejectsInvalidToken() {
+        var error = Assertions.assertThrows(IOException.class,
+                () -> facade.listGames("invalid-token"));
+
+        Assertions.assertEquals("Session is no longer valid.", error.getMessage());
+    }
+
 }
