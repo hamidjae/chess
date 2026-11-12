@@ -141,4 +141,41 @@ public class ServerFacadeTests {
         Assertions.assertEquals("Session is no longer valid.", error.getMessage());
     }
 
+    @Test
+    void joinGameAssignsWhiteSeat() throws Exception {
+        var player = facade.register("player1",
+                "testPassword", "player1@example.com");
+        String token = player.authToken();
+        int gameID = facade.createGame(token, "Queen's Gambit");
+
+        facade.joinGame(token, "WHITE", gameID);
+
+        var games = facade.listGames(token).games();
+        Assertions.assertEquals(1, games.size());
+        var game = games.iterator().next();
+        Assertions.assertEquals(gameID, game.gameID());
+        Assertions.assertEquals("player1", game.whiteUsername());
+        Assertions.assertNull(game.blackUsername());
+    }
+
+    @Test
+    void joinGameRejectsOccupiedSeat() throws Exception {
+        var first = facade.register("player1",
+                "testPassword", "player1@example.com");
+        var second = facade.register("player2",
+                "testPassword", "player2@example.com");
+        int gameID = facade.createGame(first.authToken(), "World Finals");
+        facade.joinGame(first.authToken(), "BLACK", gameID);
+
+        var error = Assertions.assertThrows(IOException.class,
+                () -> facade.joinGame(second.authToken(), "BLACK", gameID));
+        Assertions.assertEquals("That color is already taken.", error.getMessage());
+
+        var games = facade.listGames(second.authToken()).games();
+        Assertions.assertEquals(1, games.size());
+        var game = games.iterator().next();
+        Assertions.assertEquals("player1", game.blackUsername());
+        Assertions.assertNull(game.whiteUsername());
+    }
+
 }
