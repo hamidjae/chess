@@ -77,4 +77,24 @@ public class ServerFacadeTests {
                 error.getMessage());
     }
 
+    @Test
+    void logoutValidToken() throws IOException, InterruptedException {
+        var registration = facade.register("player1",
+                "testPassword", "player1@example.com");
+        String token = registration.authToken();
+
+        Assertions.assertDoesNotThrow(() -> facade.logout(token));
+
+        var error = Assertions.assertThrows(IOException.class, () -> facade.logout(token));
+        Assertions.assertEquals("Session is no longer valid.", error.getMessage());
+    }
+
+    @Test
+    void rejectInvalidLogoutToken() {
+        var error = Assertions.assertThrows(IOException.class,
+                () -> facade.logout("random-kid"));
+
+        Assertions.assertEquals("Session is no longer valid.", error.getMessage());
+    }
+
 }
