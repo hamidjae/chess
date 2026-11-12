@@ -50,4 +50,31 @@ public class ServerFacadeTests {
         Assertions.assertEquals("Username already taken.", error.getMessage());
     }
 
+    @Test
+    void loginUser() throws Exception{
+        var registration = facade.register("player1", "testPassword", "player1@gmail.com");
+        var result = facade.login("player1", "testPassword");
+
+        Assertions.assertEquals("player1", registration.username());
+        Assertions.assertEquals("player1", result.username());
+
+        Assertions.assertNotNull(registration.authToken());
+        Assertions.assertNotNull(result.authToken());
+
+        Assertions.assertFalse(registration.authToken().isBlank());
+        Assertions.assertFalse(result.authToken().isBlank());
+    }
+
+    @Test
+    void rejectWrongPassword() throws Exception{
+        var registration = facade.register("player1",
+                "testPassword", "player1@gmail.com");
+
+        var error = Assertions.assertThrows(IOException.class,
+                () -> facade.login("player1", "wrong"));
+
+        Assertions.assertEquals("The username doesn't exist or the password is wrong",
+                error.getMessage());
+    }
+
 }
