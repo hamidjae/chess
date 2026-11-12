@@ -1,8 +1,11 @@
 package client;
 
 import com.google.gson.Gson;
+import request.CreateGameRequest;
 import request.LoginRequest;
 import request.RegisterRequest;
+import result.CreateGameResult;
+import result.ListGamesResult;
 import result.LoginResult;
 import result.RegisterResult;
 
@@ -92,4 +95,31 @@ public class ServerFacade {
             throw new IOException("Could not log out the user.");
         }
     }
+
+    public int createGame(String authToken, String gameName)
+            throws IOException, InterruptedException {
+        String json = gson.toJson(new CreateGameRequest(gameName));
+
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(baseURL + "/game"))
+                .header("Authorization", authToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 401) {
+            throw new IOException("Session is no longer valid.");
+        }
+        if (response.statusCode() == 400) {
+            throw new IOException("Please provide a game name.");
+        }
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IOException("Could not create the game.");
+        }
+
+        return gson.fromJson(response.body(), CreateGameResult.class).gameID();
+    }
+
 }
