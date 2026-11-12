@@ -1,7 +1,9 @@
 package client;
 
 import com.google.gson.Gson;
+import request.LoginRequest;
 import request.RegisterRequest;
+import result.LoginResult;
 import result.RegisterResult;
 
 import java.io.IOException;
@@ -47,6 +49,29 @@ public class ServerFacade {
         }
 
         return gson.fromJson(response.body(), RegisterResult.class);
+    }
+
+    public LoginResult login(String username, String password)
+            throws IOException, InterruptedException{
+        var login = new LoginRequest(username, password);
+        String json = gson.toJson(login);
+
+        var httpRequest = HttpRequest.newBuilder().uri(URI.create(baseURL + "/session"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 401) {
+            throw new IOException("The username doesn't exist or the password is wrong");
+        }
+
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new IOException("Could not login the user.");
+        }
+
+        return gson.fromJson(response.body(), LoginResult.class);
     }
 
 
