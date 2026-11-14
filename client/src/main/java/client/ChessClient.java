@@ -1,6 +1,5 @@
 package ui;
 
-import java.util.Locale;
 import java.util.Scanner;
 import client.ServerFacade;
 import java.io.IOException;
@@ -105,29 +104,61 @@ public class ChessClient {
         System.out.println("Logged in as " + result.username() + ".");
     }
 
+    private void handlePrelogin(String command, String arguments)
+            throws IOException, InterruptedException {
+        switch (command) {
+            case "register" -> register(arguments);
+            case "login" -> login(arguments);
+            default -> System.out.println(
+                    "Please log in or register. Type help for commands.");
+        }
+    }
+
+    private void handlePostlogin(String command, String arguments)
+            throws IOException, InterruptedException {
+        switch (command) {
+            case "logout" -> {
+                requireArguments(arguments, 0, "logout");
+                logout();
+            }
+            default -> System.out.println(
+                    "Unknown command. Type help for available commands.");
+        }
+    }
+
+    private void logout() throws IOException, InterruptedException {
+        try {
+            facade.logout(authToken);
+        } catch (IOException exception) {
+            if (!"Session is no longer valid.".equals(exception.getMessage())) {
+                throw exception;
+            }
+        }
+
+        authToken = null;
+        System.out.println("Logged out.");
+    }
+
     private void handleCommand(String input)
             throws IOException, InterruptedException {
         String[] parts = input.split("\\s+", 2);
-        String command = parts[0].toLowerCase(Locale.ROOT);
+        String command = parts[0].toLowerCase();
         String arguments = "";
 
         if (parts.length == 2) {
             arguments = parts[1].trim();
         }
 
-        switch (command) {
-            case "help" -> {
-                requireArguments(arguments, 0, "help");
-                printHelp();
-            }
-            case "quit" -> {
-                requireArguments(arguments, 0, "quit");
-                running = false;
-            }
-            case "register" -> register(arguments);
-            case "login" -> login(arguments);
-            default -> System.out.println(
-                    "Unknown command. Type help for available commands.");
+        if (command.equals("help")) {
+            requireArguments(arguments, 0, "help");
+            printHelp();
+        } else if (command.equals("quit")) {
+            requireArguments(arguments, 0, "quit");
+            running = false;
+        } else if (authToken == null) {
+            handlePrelogin(command, arguments);
+        } else {
+            handlePostlogin(command, arguments);
         }
     }
 
@@ -141,9 +172,10 @@ public class ChessClient {
                 """);
         } else {
             System.out.println("""
-                help - Show commands
-                quit - Exit
-                """);
+            logout - Log out
+            help   - Show commands
+            quit   - Exit
+            """);
         }
     }
 }
