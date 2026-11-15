@@ -1,11 +1,14 @@
 package ui;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import client.ServerFacade;
 import java.io.IOException;
 
 
 public class ChessClient {
+    private final List<Integer> gameIDs = new ArrayList<>();
     private final Scanner scanner = new Scanner(System.in);
     private boolean running = true;
 
@@ -87,6 +90,7 @@ public class ChessClient {
 
         var result = facade.register(values[0], values[1], values[2]);
         authToken = result.authToken();
+        gameIDs.clear();
 
         System.out.println("Logged in as " + result.username() + ".");
     }
@@ -100,6 +104,7 @@ public class ChessClient {
 
         var result = facade.login(values[0], values[1]);
         authToken = result.authToken();
+        gameIDs.clear();
 
         System.out.println("Logged in as " + result.username() + ".");
     }
@@ -114,9 +119,56 @@ public class ChessClient {
         }
     }
 
+    private void createGame(String arguments)
+            throws IOException, InterruptedException {
+        if (arguments.isBlank()) {
+            throw new IllegalArgumentException("Usage: create <game name>");
+        }
+
+        facade.createGame(authToken, arguments);
+
+        System.out.println("Created \"" + arguments + "\".");
+        System.out.println("Type list to find it, then join to choose a color.");
+    }
+
+    private void listGames() throws IOException, InterruptedException {
+        var result = facade.listGames(authToken);
+        gameIDs.clear();
+
+        if (result.games().isEmpty()) {
+            System.out.println("No games available. Use create to make one.");
+            return;
+        }
+
+        for (var game : result.games()) {
+            gameIDs.add(game.gameID());
+            int listNumber = gameIDs.size();
+
+            System.out.printf(
+                    "%d. %s | White: %s | Black: %s%n",
+                    listNumber,
+                    game.gameName(),
+                    playerName(game.whiteUsername()),
+                    playerName(game.blackUsername()));
+        }
+    }
+
+    private String playerName(String username) {
+        if (username == null) {
+            return "Open";
+        }
+
+        return username;
+    }
+
     private void handlePostlogin(String command, String arguments)
             throws IOException, InterruptedException {
         switch (command) {
+            case "create" -> createGame(arguments);
+            case "list" -> {
+                requireArguments(arguments, 0, "list");
+                listGames();
+            }
             case "logout" -> {
                 requireArguments(arguments, 0, "logout");
                 logout();
@@ -136,6 +188,7 @@ public class ChessClient {
         }
 
         authToken = null;
+        gameIDs.clear();
         System.out.println("Logged out.");
     }
 
@@ -170,11 +223,15 @@ public class ChessClient {
                 help                                   - Show commands
                 quit                                   - Exit
                 """);
-        } else {
+        }
+
+        else {
             System.out.println("""
-            logout - Log out
-            help   - Show commands
-            quit   - Exit
+            create <game name> - Create a game
+            list               - List available games
+            logout             - Log out
+            help               - Show commands
+            quit               - Exit
             """);
         }
     }
