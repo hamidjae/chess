@@ -9,16 +9,18 @@ import result.CreateGameResult;
 import result.ListGamesResult;
 import result.LoginResult;
 import result.RegisterResult;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 public class ServerFacade {
     private final String baseURL;
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
     private final Gson gson = new Gson();
 
     public ServerFacade(int port){
@@ -26,7 +28,11 @@ public class ServerFacade {
     }
 
     public void clear() throws IOException, InterruptedException {
-        HttpRequest httpRequest = HttpRequest.newBuilder().uri(URI.create(baseURL + "/db")).DELETE().build();
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .timeout(Duration.ofSeconds(10))
+                .uri(URI.create(baseURL + "/db"))
+                .DELETE()
+                .build();
         var response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.discarding());
         if (response.statusCode() < 200 || response.statusCode() >= 300){
             throw new IOException("Failed to clear the test database");
@@ -39,6 +45,7 @@ public class ServerFacade {
         String json = gson.toJson(registration);
 
         var httpRequest = HttpRequest.newBuilder().uri(URI.create(baseURL + "/user"))
+                .timeout(Duration.ofSeconds(10))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -61,6 +68,7 @@ public class ServerFacade {
         String json = gson.toJson(login);
 
         var httpRequest = HttpRequest.newBuilder().uri(URI.create(baseURL + "/session"))
+                .timeout(Duration.ofSeconds(10))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .build();
@@ -81,6 +89,7 @@ public class ServerFacade {
     public void logout(String authToken)
             throws IOException, InterruptedException{
         var httpRequest = HttpRequest.newBuilder()
+                .timeout(Duration.ofSeconds(10))
                 .uri(URI.create(baseURL + "/session"))
                 .header("Authorization", authToken)
                 .DELETE()
@@ -102,6 +111,7 @@ public class ServerFacade {
         String json = gson.toJson(new CreateGameRequest(gameName));
 
         var request = HttpRequest.newBuilder()
+                .timeout(Duration.ofSeconds(10))
                 .uri(URI.create(baseURL + "/game"))
                 .header("Authorization", authToken)
                 .header("Content-Type", "application/json")
@@ -126,6 +136,7 @@ public class ServerFacade {
     public ListGamesResult listGames(String authToken)
             throws IOException, InterruptedException {
         var request = HttpRequest.newBuilder()
+                .timeout(Duration.ofSeconds(10))
                 .uri(URI.create(baseURL + "/game"))
                 .header("Authorization", authToken)
                 .GET()
@@ -148,6 +159,7 @@ public class ServerFacade {
         String json = gson.toJson(new JoinGameRequest(playerColor, gameID));
 
         var request = HttpRequest.newBuilder()
+                .timeout(Duration.ofSeconds(10))
                 .uri(URI.create(baseURL + "/game"))
                 .header("Authorization", authToken)
                 .header("Content-Type", "application/json")

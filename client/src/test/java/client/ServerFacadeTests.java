@@ -178,4 +178,25 @@ public class ServerFacadeTests {
         Assertions.assertNull(game.whiteUsername());
     }
 
+    @Test
+    void clearRemovesExistingData() throws Exception {
+        var user = facade.register(
+                "player1", "testPassword", "player1@example.com");
+        facade.createGame(user.authToken(), "Old Game");
+
+        facade.clear();
+
+        Assertions.assertThrows(IOException.class,
+                () -> facade.login("player1", "testPassword"));
+
+        Assertions.assertThrows(IOException.class,
+                () -> facade.listGames(user.authToken()));
+
+        var newUser = facade.register(
+                "player1", "testPassword", "player1@example.com");
+
+        Assertions.assertTrue(
+                facade.listGames(newUser.authToken()).games().isEmpty());
+    }
+
 }
